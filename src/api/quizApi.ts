@@ -6,9 +6,7 @@ const API_BASE = import.meta.env.DEV
   : (import.meta.env.VITE_API_BASE ?? '')
 
 async function authHeaders(): Promise<Record<string, string>> {
-  if (import.meta.env.DEV) return {}
-  const token = await getValidToken()
-  return { Authorization: `Bearer ${token}` }
+  return {}
 }
 
 export async function fetchTopQuizzes(): Promise<Quiz[]> {
