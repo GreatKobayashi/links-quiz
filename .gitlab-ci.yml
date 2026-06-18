@@ -22,6 +22,7 @@ deploy:
         --credential-source-file=/tmp/id_token.txt
     - echo $GCP_ID_TOKEN > /tmp/id_token.txt
     - /opt/google-cloud-sdk/bin/gcloud auth login --cred-file=/tmp/creds.json --quiet
+    - export GOOGLE_APPLICATION_CREDENTIALS=/tmp/creds.json
     - npm install -g firebase-tools
     - npm ci
   script:
