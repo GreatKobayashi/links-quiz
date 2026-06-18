@@ -42,9 +42,7 @@ export function Carousel({ quizzes }: Props) {
 
   const realIndex = index % total
   const containerW = CARD_W * 3 + GAP * 2
-  // カード0が中央に来るよう、index=0 のとき translateX=0 になるオフセット
   const centerOffset = (containerW - CARD_W) / 2
-  const translateX = centerOffset - index * STEP
 
   // 画面に映る範囲のカードだけ描画（全件描画を避けつつ連続性を保つ）
   const visibleCards = [-2, -1, 0, 1, 2].map((d) => {

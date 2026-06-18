@@ -73,11 +73,11 @@ export async function generateQuiz(
       }
 
       if (event.type === 'inprocess') {
-        onProgress(event.message)
+        onProgress(event.message ?? '')
       } else if (event.type === 'done') {
         return event.result as Quiz
       } else if (event.type === 'error') {
-        throw new Error(event.message)
+        throw new Error(event.message ?? 'Unknown error')
       }
     }
   }
