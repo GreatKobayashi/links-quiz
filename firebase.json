@@ -4,6 +4,30 @@
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "rewrites": [
       {
+        "source": "/apps/**",
+        "run": { "serviceId": "quiz-agent", "region": "asia-northeast1" }
+      },
+      {
+        "source": "/quiz/**",
+        "run": { "serviceId": "quiz-agent", "region": "asia-northeast1" }
+      },
+      {
+        "source": "/quizzes/**",
+        "run": { "serviceId": "quiz-agent", "region": "asia-northeast1" }
+      },
+      {
+        "source": "/quizzes",
+        "run": { "serviceId": "quiz-agent", "region": "asia-northeast1" }
+      },
+      {
+        "source": "/feedback",
+        "run": { "serviceId": "quiz-agent", "region": "asia-northeast1" }
+      },
+      {
+        "source": "/run",
+        "run": { "serviceId": "quiz-agent", "region": "asia-northeast1" }
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }
