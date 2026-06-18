@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "links-quiz",
+      "runtimeExecutable": "C:\\Users\\kobay\\AppData\\Local\\nvm\\v22.22.3\\node.exe",
+      "runtimeArgs": ["node_modules\\vite\\bin\\vite.js", "--port", "5174"],
+      "port": 5174,
+      "autoPort": false
+    }
+  ]
+}
