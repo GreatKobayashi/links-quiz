@@ -28,6 +28,6 @@ deploy:
     - npm ci
   script:
     - VITE_API_BASE=$VITE_API_BASE npm run build
-    - firebase deploy --only hosting --project=$PROJECT_ID
+    - firebase deploy --only hosting --project=$PROJECT_ID --debug 2>&1 | tail -50
   environment:
     name: production
