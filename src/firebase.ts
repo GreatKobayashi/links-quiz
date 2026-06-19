@@ -35,21 +35,26 @@ function saveGisToken(token: string) {
   sessionStorage.setItem(GIS_TOKEN_TIME_KEY, String(gisTokenTime))
 }
 
+let gisInitialized = false
+
 function requestGisTokenSilent(): Promise<string> {
   return new Promise((resolve, reject) => {
     const g = (window as any).google
     if (!g?.accounts?.id) { reject(new Error('GIS not loaded')); return }
 
     let resolved = false
-    g.accounts.id.initialize({
-      client_id: GIS_CLIENT_ID,
-      auto_select: true,
-      callback: (resp: { credential: string }) => {
-        resolved = true
-        saveGisToken(resp.credential)
-        resolve(resp.credential)
-      },
-    })
+    if (!gisInitialized) {
+      gisInitialized = true
+      g.accounts.id.initialize({
+        client_id: GIS_CLIENT_ID,
+        auto_select: true,
+        callback: (resp: { credential: string }) => {
+          resolved = true
+          saveGisToken(resp.credential)
+          resolve(resp.credential)
+        },
+      })
+    }
     g.accounts.id.prompt((notification: any) => {
       if (!resolved && (notification.isNotDisplayed() || notification.isSkippedMoment())) {
         reject(new Error('GIS skipped'))
