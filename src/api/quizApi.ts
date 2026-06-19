@@ -1,14 +1,19 @@
 import type { Quiz } from '../types'
-import { getCloudRunToken } from '../firebase'
+import { getCloudRunToken, getAccessToken } from '../firebase'
 
 const API_BASE = import.meta.env.DEV
   ? 'http://localhost:8080'
   : (import.meta.env.VITE_API_BASE ?? '')
 
-async function authHeaders(): Promise<Record<string, string>> {
+async function authHeaders(includeUserToken = false): Promise<Record<string, string>> {
   if (import.meta.env.DEV) return {}
   const token = await getCloudRunToken()
-  return token ? { Authorization: `Bearer ${token}` } : {}
+  const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {}
+  if (includeUserToken) {
+    const userToken = getAccessToken()
+    if (userToken) headers['X-User-Token'] = userToken
+  }
+  return headers
 }
 
 export async function fetchTopQuizzes(): Promise<Quiz[]> {
@@ -49,7 +54,7 @@ export async function generateQuiz(
 
   const res = await fetch(`${API_BASE}/quiz/stream`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...await authHeaders() },
+    headers: { 'Content-Type': 'application/json', ...await authHeaders(true) },
     body: JSON.stringify({ session_id: sessionId, user_id: userId, target: targetName ?? null }),
   })
 

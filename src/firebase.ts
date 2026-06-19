@@ -15,6 +15,7 @@ export const auth = getAuth(app)
 
 const provider = new GoogleAuthProvider()
 provider.addScope('https://www.googleapis.com/auth/cloud-platform')
+provider.addScope('https://www.googleapis.com/auth/spreadsheets.readonly')
 
 const INVOKER_SA = 'quiz-run-invoker@question-agent-ytt.iam.gserviceaccount.com'
 const CLOUD_RUN_URL = 'https://quiz-agent-lwyddf5sta-an.a.run.app'
@@ -50,6 +51,10 @@ async function fetchCloudRunToken(oauthToken: string): Promise<string | null> {
   } catch {
     return null
   }
+}
+
+export function getAccessToken(): string | null {
+  return accessToken
 }
 
 export async function getCloudRunToken(): Promise<string | null> {
