@@ -56,9 +56,15 @@ def main():
 
     with open("firebase.json") as f:
         firebase_config = json.load(f)
-    hosting_config = firebase_config.get("hosting", {})
-    hosting_config.pop("public", None)
-    hosting_config.pop("ignore", None)
+    raw = firebase_config.get("hosting", {})
+    rewrites = []
+    for r in raw.get("rewrites", []):
+        entry = {k: v for k, v in r.items() if k != "source"}
+        entry["glob"] = r["source"]
+        if "destination" in entry:
+            entry["path"] = entry.pop("destination")
+        rewrites.append(entry)
+    hosting_config = {"rewrites": rewrites}
 
     print("Creating version...")
     version = request("POST", f"{BASE_URL}/sites/{SITE_ID}/versions", token, {"config": hosting_config})
