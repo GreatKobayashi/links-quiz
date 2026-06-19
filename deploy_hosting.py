@@ -54,8 +54,14 @@ def main():
     files = collect_files()
     file_hashes = {path: info[0] for path, info in files.items()}
 
+    with open("firebase.json") as f:
+        firebase_config = json.load(f)
+    hosting_config = firebase_config.get("hosting", {})
+    hosting_config.pop("public", None)
+    hosting_config.pop("ignore", None)
+
     print("Creating version...")
-    version = request("POST", f"{BASE_URL}/sites/{SITE_ID}/versions", token, {})
+    version = request("POST", f"{BASE_URL}/sites/{SITE_ID}/versions", token, {"config": hosting_config})
     version_name = version["name"]
     print(f"Version: {version_name}")
 
