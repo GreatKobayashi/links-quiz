@@ -29,7 +29,8 @@ def request(method, url, token, data=None, binary=None):
         method=method
     )
     with urllib.request.urlopen(req) as resp:
-        return json.loads(resp.read())
+        raw = resp.read()
+        return json.loads(raw) if raw else {}
 
 
 def collect_files():
