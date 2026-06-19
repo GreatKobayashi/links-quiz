@@ -14,86 +14,67 @@ const app = initializeApp(firebaseConfig)
 export const auth = getAuth(app)
 
 const provider = new GoogleAuthProvider()
+provider.addScope('https://www.googleapis.com/auth/cloud-platform')
 
-// GIS token (iss: https://accounts.google.com) for Cloud Run auth
-const GIS_CLIENT_ID = '999418370792-efsgns67rn9qsbh38aauf6sguh4boklh.apps.googleusercontent.com'
-const GIS_TOKEN_KEY = 'gis_token'
-const GIS_TOKEN_TIME_KEY = 'gis_token_time'
-const TOKEN_TTL_MS = 55 * 60 * 1000 // 55 minutes
+const INVOKER_SA = 'quiz-run-invoker@question-agent-ytt.iam.gserviceaccount.com'
+const CLOUD_RUN_URL = 'https://quiz-agent-lwyddf5sta-an.a.run.app'
+const IAM_ENDPOINT = `https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/${INVOKER_SA}:generateIdToken`
 
-let gisToken: string | null = sessionStorage.getItem(GIS_TOKEN_KEY)
-let gisTokenTime: number = Number(sessionStorage.getItem(GIS_TOKEN_TIME_KEY) ?? 0)
+const KEY_ACCESS = 'g_access_token'
+const KEY_CR_TOKEN = 'cr_token'
+const KEY_CR_EXPIRY = 'cr_token_expiry'
 
-function isTokenValid(): boolean {
-  return !!gisToken && Date.now() - gisTokenTime < TOKEN_TTL_MS
-}
+let accessToken: string | null = sessionStorage.getItem(KEY_ACCESS)
+let crToken: string | null = sessionStorage.getItem(KEY_CR_TOKEN)
+let crExpiry: number = Number(sessionStorage.getItem(KEY_CR_EXPIRY) ?? 0)
 
-function saveGisToken(token: string) {
-  gisToken = token
-  gisTokenTime = Date.now()
-  sessionStorage.setItem(GIS_TOKEN_KEY, token)
-  sessionStorage.setItem(GIS_TOKEN_TIME_KEY, String(gisTokenTime))
-}
-
-let gisInitialized = false
-
-function requestGisTokenSilent(): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const g = (window as any).google
-    if (!g?.accounts?.id) { reject(new Error('GIS not loaded')); return }
-
-    let resolved = false
-    if (!gisInitialized) {
-      gisInitialized = true
-      g.accounts.id.initialize({
-        client_id: GIS_CLIENT_ID,
-        auto_select: true,
-        callback: (resp: { credential: string }) => {
-          resolved = true
-          saveGisToken(resp.credential)
-          resolve(resp.credential)
-        },
-      })
-    }
-    g.accounts.id.prompt((notification: any) => {
-      if (!resolved && (notification.isNotDisplayed() || notification.isSkippedMoment())) {
-        reject(new Error('GIS skipped'))
-      }
+async function fetchCloudRunToken(oauthToken: string): Promise<string | null> {
+  try {
+    const res = await fetch(IAM_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${oauthToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ audience: CLOUD_RUN_URL, includeEmail: true }),
     })
-    setTimeout(() => { if (!resolved) reject(new Error('GIS timeout')) }, 5000)
-  })
-}
-
-export function getCloudRunToken(): string | null {
-  return isTokenValid() ? gisToken : null
-}
-
-export async function signInWithGoogle(): Promise<void> {
-  await signInWithPopup(auth, provider)
-  // After Firebase sign-in, try GIS silent token acquisition
-  try {
-    await requestGisTokenSilent()
-  } catch {
-    // GIS silent failed; token will be fetched on next call if needed
-  }
-}
-
-export async function ensureCloudRunToken(): Promise<string | null> {
-  if (isTokenValid()) return gisToken
-  try {
-    return await requestGisTokenSilent()
+    if (!res.ok) return null
+    const data = await res.json()
+    const token: string = data.token
+    const expiry = Date.now() + 55 * 60 * 1000
+    crToken = token
+    crExpiry = expiry
+    sessionStorage.setItem(KEY_CR_TOKEN, token)
+    sessionStorage.setItem(KEY_CR_EXPIRY, String(expiry))
+    return token
   } catch {
     return null
   }
 }
 
+export async function getCloudRunToken(): Promise<string | null> {
+  if (crToken && Date.now() < crExpiry) return crToken
+  if (!accessToken) return null
+  return fetchCloudRunToken(accessToken)
+}
+
+export async function signInWithGoogle(): Promise<void> {
+  const result = await signInWithPopup(auth, provider)
+  const credential = GoogleAuthProvider.credentialFromResult(result)
+  if (credential?.accessToken) {
+    accessToken = credential.accessToken
+    sessionStorage.setItem(KEY_ACCESS, accessToken)
+    await fetchCloudRunToken(accessToken)
+  }
+}
+
 export function signOutUser() {
-  gisToken = null
-  gisTokenTime = 0
-  sessionStorage.removeItem(GIS_TOKEN_KEY)
-  sessionStorage.removeItem(GIS_TOKEN_TIME_KEY)
-  const g = (window as any).google
-  g?.accounts?.id?.disableAutoSelect()
+  accessToken = null
+  crToken = null
+  crExpiry = 0
+  sessionStorage.removeItem(KEY_ACCESS)
+  sessionStorage.removeItem(KEY_CR_TOKEN)
+  sessionStorage.removeItem(KEY_CR_EXPIRY)
   return signOut(auth)
 }
 

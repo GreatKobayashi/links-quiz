@@ -1,5 +1,5 @@
 import type { Quiz } from '../types'
-import { ensureCloudRunToken } from '../firebase'
+import { getCloudRunToken } from '../firebase'
 
 const API_BASE = import.meta.env.DEV
   ? 'http://localhost:8080'
@@ -7,7 +7,7 @@ const API_BASE = import.meta.env.DEV
 
 async function authHeaders(): Promise<Record<string, string>> {
   if (import.meta.env.DEV) return {}
-  const token = await ensureCloudRunToken()
+  const token = await getCloudRunToken()
   return token ? { Authorization: `Bearer ${token}` } : {}
 }
 
