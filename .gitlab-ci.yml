@@ -20,11 +20,12 @@ deploy:
         --output-file=/tmp/creds.json
         --credential-source-file=/tmp/id_token.txt
     - gcloud auth login --cred-file=/tmp/creds.json --quiet
+    - export GOOGLE_APPLICATION_CREDENTIALS=/tmp/creds.json
     - apt-get install -y -qq nodejs npm
-    - npm install -g npm@latest
+    - npm install -g npm@latest firebase-tools
     - npm ci
   script:
     - npm run build
-    - python3 deploy_hosting.py
+    - firebase deploy --only hosting --project $PROJECT_ID --non-interactive
   environment:
     name: production
