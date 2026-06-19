@@ -15,20 +15,29 @@ export const auth = getAuth(app)
 
 const provider = new GoogleAuthProvider()
 
-let googleIdToken: string | null = null
-let tokenObtainedAt: number = 0
+const TOKEN_KEY = 'g_id_token'
+const TOKEN_TIME_KEY = 'g_id_token_time'
+
+let googleIdToken: string | null = sessionStorage.getItem(TOKEN_KEY)
+let tokenObtainedAt: number = Number(sessionStorage.getItem(TOKEN_TIME_KEY) ?? 0)
 
 export async function signInWithGoogle(): Promise<string> {
   const result = await signInWithPopup(auth, provider)
   const credential = GoogleAuthProvider.credentialFromResult(result)
   googleIdToken = credential?.idToken ?? null
   tokenObtainedAt = Date.now()
+  if (googleIdToken) {
+    sessionStorage.setItem(TOKEN_KEY, googleIdToken)
+    sessionStorage.setItem(TOKEN_TIME_KEY, String(tokenObtainedAt))
+  }
   return googleIdToken!
 }
 
 export function getValidToken(): string | null {
   const elapsed = Date.now() - tokenObtainedAt
   if (!googleIdToken || elapsed > 50 * 60 * 1000) {
+    sessionStorage.removeItem(TOKEN_KEY)
+    sessionStorage.removeItem(TOKEN_TIME_KEY)
     return null
   }
   return googleIdToken
