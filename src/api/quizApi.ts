@@ -1,20 +1,20 @@
 import type { Quiz } from '../types'
-import { getValidToken } from '../firebase'
+import { ensureCloudRunToken } from '../firebase'
 
 const API_BASE = import.meta.env.DEV
   ? 'http://localhost:8080'
   : (import.meta.env.VITE_API_BASE ?? '')
 
-function authHeaders(): Record<string, string> {
+async function authHeaders(): Promise<Record<string, string>> {
   if (import.meta.env.DEV) return {}
-  const token = getValidToken()
+  const token = await ensureCloudRunToken()
   return token ? { Authorization: `Bearer ${token}` } : {}
 }
 
 export async function fetchTopQuizzes(): Promise<Quiz[]> {
   const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
   const res = await fetch(`${API_BASE}/quizzes?sort=top_rated&limit=10&created_after=${oneWeekAgo}`, {
-    headers: authHeaders(),
+    headers: await authHeaders(),
   })
   if (!res.ok) throw new Error(`HTTPエラー: ${res.status}`)
   const data = await res.json()
@@ -23,7 +23,7 @@ export async function fetchTopQuizzes(): Promise<Quiz[]> {
 
 export async function fetchLatestQuizzes(): Promise<Quiz[]> {
   const res = await fetch(`${API_BASE}/quizzes?sort=latest&limit=10`, {
-    headers: authHeaders(),
+    headers: await authHeaders(),
   })
   if (!res.ok) throw new Error(`HTTPエラー: ${res.status}`)
   const data = await res.json()
@@ -32,7 +32,7 @@ export async function fetchLatestQuizzes(): Promise<Quiz[]> {
 
 export async function fetchQuizById(id: string): Promise<Quiz | null> {
   const res = await fetch(`${API_BASE}/quizzes/${id}`, {
-    headers: authHeaders(),
+    headers: await authHeaders(),
   })
   if (res.status === 404) return null
   if (!res.ok) throw new Error(`HTTPエラー: ${res.status}`)
@@ -49,7 +49,7 @@ export async function generateQuiz(
 
   const res = await fetch(`${API_BASE}/quiz/stream`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    headers: { 'Content-Type': 'application/json', ...await authHeaders() },
     body: JSON.stringify({ session_id: sessionId, user_id: userId, target: targetName ?? null }),
   })
 
@@ -104,7 +104,7 @@ export async function searchQuizzes(params: { keyword?: string; tags?: string; p
   if (params.tags) query.set('tags', params.tags)
   if (params.page != null) query.set('page', String(params.page))
   const res = await fetch(`${API_BASE}/quizzes?${query.toString()}`, {
-    headers: authHeaders(),
+    headers: await authHeaders(),
   })
   if (!res.ok) throw new Error(`HTTPエラー: ${res.status}`)
   return res.json()
@@ -113,7 +113,7 @@ export async function searchQuizzes(params: { keyword?: string; tags?: string; p
 export async function updateQuizTags(quizId: string, tags: string[]): Promise<void> {
   await fetch(`${API_BASE}/quiz/${quizId}`, {
     method: 'PATCH',
-    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    headers: { 'Content-Type': 'application/json', ...await authHeaders() },
     body: JSON.stringify({ tags }),
   })
 }
@@ -122,7 +122,7 @@ export async function rateQuiz(quizId: string, rating: 'good' | 'bad'): Promise<
   const userId = 'user-001'
   await fetch(`${API_BASE}/quiz/${quizId}/rate`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    headers: { 'Content-Type': 'application/json', ...await authHeaders() },
     body: JSON.stringify({ user_id: userId, rating }),
   })
 }
