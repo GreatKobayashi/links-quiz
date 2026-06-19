@@ -1,15 +1,11 @@
 import type { Quiz } from '../types'
-import { auth } from '../firebase'
 
 const API_BASE = import.meta.env.DEV
   ? 'http://localhost:8080'
   : (import.meta.env.VITE_API_BASE ?? '')
 
 async function authHeaders(): Promise<Record<string, string>> {
-  const user = auth.currentUser
-  if (!user) return {}
-  const token = await user.getIdToken()
-  return { Authorization: `Bearer ${token}` }
+  return {}
 }
 
 export async function fetchTopQuizzes(): Promise<Quiz[]> {
