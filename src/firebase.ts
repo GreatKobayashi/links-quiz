@@ -26,10 +26,10 @@ export async function signInWithGoogle(): Promise<string> {
   return googleIdToken!
 }
 
-export async function getValidToken(): Promise<string> {
+export function getValidToken(): string | null {
   const elapsed = Date.now() - tokenObtainedAt
   if (!googleIdToken || elapsed > 50 * 60 * 1000) {
-    return signInWithGoogle()
+    return null
   }
   return googleIdToken
 }
