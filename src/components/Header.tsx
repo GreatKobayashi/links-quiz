@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { signOutUser } from '../firebase'
 import logo from '../assets/logo.png'
 
 export function Header() {
@@ -8,10 +9,16 @@ export function Header() {
         <Link to="/" className="flex items-center">
           <img src={logo} alt="YTT LINKS" className="h-10 w-auto" />
         </Link>
-        <nav className="flex gap-4">
+        <nav className="flex items-center gap-4">
           <Link to="/" className="text-gray-600 hover:text-blue-600 text-sm font-medium transition-colors">
             ホーム
           </Link>
+          <button
+            onClick={() => signOutUser()}
+            className="text-gray-500 hover:text-red-600 text-sm font-medium transition-colors"
+          >
+            サインアウト
+          </button>
         </nav>
       </div>
     </header>
