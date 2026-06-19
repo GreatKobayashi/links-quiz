@@ -3,31 +3,17 @@ stages:
 
 variables:
   PROJECT_ID: question-agent-ytt
-  GOOGLE_APPLICATION_CREDENTIALS: /tmp/creds.json
 
 deploy:
   stage: deploy
   image: node:22
   only:
     - master
-  id_tokens:
-    GCP_ID_TOKEN:
-      aud: https://iam.googleapis.com/projects/999418370792/locations/global/workloadIdentityPools/gitlab-pool/providers/gitlab-provider
   before_script:
-    - apt-get update -qq && apt-get install -y -qq curl
-    - curl -sSL https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-linux-x86_64.tar.gz | tar xz -C /opt
-    - /opt/google-cloud-sdk/bin/gcloud iam workload-identity-pools create-cred-config
-        projects/999418370792/locations/global/workloadIdentityPools/gitlab-pool/providers/gitlab-provider
-        --service-account=gitlab-ci@question-agent-ytt.iam.gserviceaccount.com
-        --output-file=/tmp/creds.json
-        --credential-source-file=/tmp/id_token.txt
-    - echo $GCP_ID_TOKEN > /tmp/id_token.txt
-    - /opt/google-cloud-sdk/bin/gcloud auth login --cred-file=/tmp/creds.json --quiet
-    - mkdir -p ~/.config/gcloud && cp /tmp/creds.json ~/.config/gcloud/application_default_credentials.json
     - npm install -g firebase-tools
     - npm ci
   script:
-    - VITE_API_BASE=$VITE_API_BASE npm run build
-    - firebase deploy --only hosting --project=$PROJECT_ID --debug 2>&1 | tail -50
+    - npm run build
+    - firebase deploy --only hosting --project=$PROJECT_ID --token $FIREBASE_TOKEN
   environment:
     name: production
