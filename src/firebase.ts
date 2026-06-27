@@ -17,8 +17,8 @@ const provider = new GoogleAuthProvider()
 provider.addScope('https://www.googleapis.com/auth/cloud-platform')
 provider.addScope('https://www.googleapis.com/auth/spreadsheets.readonly')
 
-const INVOKER_SA = 'quiz-run-invoker@question-agent-ytt.iam.gserviceaccount.com'
-const CLOUD_RUN_URL = 'https://quiz-agent-lwyddf5sta-an.a.run.app'
+const INVOKER_SA = import.meta.env.VITE_INVOKER_SA as string
+const CLOUD_RUN_URL = import.meta.env.VITE_CLOUD_RUN_URL as string
 const IAM_ENDPOINT = `https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/${INVOKER_SA}:generateIdToken`
 
 const KEY_ACCESS = 'g_access_token'
